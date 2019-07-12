@@ -1,0 +1,16 @@
+[include]
+
+[ignore]
+.*/node_modules/.*
+
+[libs]
+
+[lints]
+
+[options]
+emoji=true
+suppress_comment= \\(.\\|\n\\)*\\$flow:
+sharedmemory.hash_table_pow=21
+
+[version]
+0.102.0
