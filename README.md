@@ -26,8 +26,10 @@
 ##### POST
     - '/api/add-book'
 Add book route expect to receive object with all book fields. bookId will addet automaticly and send database response.
+    
     - '/api/update-book'
 Update book route expect to receive object with bookId as WHERE condition and send database response.
+
 #### INSTALLATION
     Clone repository.
 	Run "npm install"
