@@ -8,33 +8,34 @@ module.exports = function () {
   // $flow: <string> do not wants builds
   return new Promise(async (resolve) => { // eslint-disable-line no-async-promise-executor
     const databaseExist = await checkDataBase();
-    {let connectionSetted, itemsCount, minDate, maxDate;
-    if (databaseExist) {
-      connectionSetted = await setDatabaseToConnection(config.dbName);
-      console.log('Connection :', connectionSetted);
-      itemsCount = await getItemsCount(config.tableName);
-      console.log('itemsCount', itemsCount);
-      minDate = await getMinDate(config.tableName);
-      maxDate = await getMaxDate(config.tableName);
-      console.log('minDate && maxDate', minDate, maxDate);
-      resolve('Database exist');
-    } else {
-      const databaseCreated = await createDataBase(config.dbName);
-      console.log('Database created : ', databaseCreated);
-      connectionSetted = await setDatabaseToConnection(config.dbName);
-      console.log('Connection', connectionSetted);
-      if (databaseCreated) {
-        const table = await createTable(config.tableName);
-        console.log('Table', table);
-        const fill = await fillDataBase();
-        console.log('Filled :', fill);
-        itemsCount = await getItemsCount(config.tableName)
+    { let connectionSetted, itemsCount, minDate, maxDate;
+      if (databaseExist) {
+        connectionSetted = await setDatabaseToConnection(config.dbName);
+        console.log('Connection :', connectionSetted);
+        itemsCount = await getItemsCount(config.tableName);
         console.log('itemsCount', itemsCount);
-        resolve('Database created and filled');
+        minDate = await getMinDate(config.tableName);
+        maxDate = await getMaxDate(config.tableName);
+        console.log('minDate && maxDate', minDate, maxDate);
+        resolve('Database exist');
+      } else {
+        const databaseCreated = await createDataBase(config.dbName);
+        console.log('Database created : ', databaseCreated);
+        connectionSetted = await setDatabaseToConnection(config.dbName);
+        console.log('Connection', connectionSetted);
+        if (databaseCreated) {
+          const table = await createTable(config.tableName);
+          console.log('Table', table);
+          const fill = await fillDataBase();
+          console.log('Filled :', fill);
+          itemsCount = await getItemsCount(config.tableName);
+          console.log('itemsCount', itemsCount);
+          resolve('Database created and filled');
+        }
       }
-    }}
+    }
   });
-}
+};
 
 // later we may create separate module and move there
 // some of this functions, but for now not need it
@@ -47,7 +48,7 @@ function getMinDate (tableName) {
       // $flow: mixed [1] is incompatible with `Date`
       resolve(new Date(Object.values(result[0])[0]));
     });
-  })
+  });
 }
 
 function getMaxDate (tableName) {
@@ -58,7 +59,7 @@ function getMaxDate (tableName) {
       // $flow: mixed [1] is incompatible with `Date`
       resolve(new Date(Object.values(result[0])[0]));
     });
-  })
+  });
 }
 
 function setDatabaseToConnection (dbName: string) {
@@ -66,8 +67,8 @@ function setDatabaseToConnection (dbName: string) {
     connection.changeUser({ database: dbName }, (err, result) => {
       if (err) reject(err);
       resolve(result);
-    })
-  })
+    });
+  });
 }
 
 function getItemsCount (tableName: string) {
@@ -75,8 +76,8 @@ function getItemsCount (tableName: string) {
     connection.query(`SELECT COUNT(bookId) FROM ${tableName}`, (err, result) => {
       if (err) reject(err);
       resolve(result);
-    })
-  })
+    });
+  });
 }
 
 // This operation may to do in another way: WHERE SCHEMA_NAME 
@@ -119,7 +120,7 @@ function fillDataBase () {
       } else {
         resolve('Database filled!');
       }
-    }
+    };
     insertNext();
   });
 }

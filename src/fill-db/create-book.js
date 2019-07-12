@@ -14,9 +14,9 @@ const lorem = new LoremIpsum({
 });
 
 module.exports = (currentCount: number): Book => {
-  function getNewDate ():number {
+  function getNewDate (): number {
     return Date.now() - 6*60*60*currentCount;
-  };
+  }
   return console.log('date:', getNewDate()) || ({
     bookId: booksCount - currentCount,
     title: lorem.generateWords(3),
@@ -24,5 +24,5 @@ module.exports = (currentCount: number): Book => {
     author: lorem.generateWords(2),
     description: lorem.generateWords(10),
     image: '/image-url.jpg',
-  })
+  });
 };
