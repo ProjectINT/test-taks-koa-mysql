@@ -12,7 +12,7 @@
 ##### 2 Have api endpoints:
 
 ##### GET
-     '/api/books:?bookId'
+     '/api/books:bookId?'
     Avaible get params:
         title: string,
         author: string,
