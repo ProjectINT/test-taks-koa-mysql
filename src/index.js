@@ -1,12 +1,14 @@
 // @flow
 const Koa = require('koa');
-const bodyParser = require('koa-bodyparser');
 
+const { port } = require('../config');
 const fillDataBase = require('./fill-db');
 const router = require('./router');
 
 const app = new Koa();
-const port = 3000;
+app.use(router.routes())
+  .use(router.allowedMethods());
+
 
 app.use(async (ctx: Context, next) => {
   try {
@@ -22,8 +24,7 @@ app.on('error', (err, ctx: Context) => {
   console.log('error : ', err, ctx.status);
 });
 
-app.use(bodyParser());
-app.use(router.routes());
+
 
 const fillDb = async () => {
   const fill = await fillDataBase();

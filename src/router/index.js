@@ -1,5 +1,6 @@
 // @flow
 const Router = require('koa-router');
+const koaBody = require('koa-body');
 const router = new Router();
 const { getBooks, addBook, updateBook } = require('../controllers');
 
@@ -8,8 +9,9 @@ router.get('/', (ctx, next) => {
   next();
 });
 
-router.get('/api/books/:bookId?', getBooks);
-router.post('/api/add-book', addBook);
-router.post('/api/update-book', updateBook);
+router.get('/api/books/:bookId?', getBooks)
+  .post('/add-book', koaBody(), addBook)
+  .post('/update-book', koaBody(), updateBook);
+
 
 module.exports = router;

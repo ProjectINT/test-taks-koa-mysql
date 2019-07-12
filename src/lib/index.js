@@ -1,5 +1,25 @@
 // @flow
 const config = require('../../config');
+const connection = require('../db-connection');
+
+exports.getAddBookQuery = (body: Object, newId: number) => {
+  const objectToInsert: Book = Object.assign(body, { bookId: newId });
+  const columns = Object.keys(objectToInsert);
+  const values = Object.values(objectToInsert).map(item => (typeof item === 'string' ? '\'' + item + '\'' : item ));
+  return `INSERT INTO ${config.tableName} (${columns.join(', ')})
+  VALUES (${values.join(', ')});`;
+};
+
+exports.getMaxNumber = (field: string, table: string, ctx: Context): Promise<number> => {
+  return new Promise(resolve => {
+    connection.query(`SELECT MAX(${field}) AS maxID FROM ${table};`, (err, result) => {
+      if (err) ctx.throw(500, 'Error on getMaxNumber');
+      console.log('typeof result[0].maxID : ', typeof result[0].maxID);
+      const toResolve: number = parseInt(result[0].maxID);
+      resolve(toResolve);
+    });
+  });
+};
 
 exports.getQueryByParams = (getParams: Object) => {
   for (let key in getParams) {
