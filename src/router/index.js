@@ -10,8 +10,7 @@ router.get('/', (ctx, next) => {
 });
 
 router.get('/api/books/:bookId?', getBooks)
-  .post('/add-book', koaBody(), addBook)
-  .post('/update-book', koaBody(), updateBook);
-
+  .post('/api/add-book', koaBody(), addBook)
+  .post('/api/update-book', koaBody(), updateBook);
 
 module.exports = router;

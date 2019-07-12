@@ -2,6 +2,15 @@
 const config = require('../../config');
 const connection = require('../db-connection');
 
+exports.getUpdateString = (updateObject: Object) => {
+  const { bookId } = updateObject;
+  delete updateObject.bookId;
+  let setStrings: Array<string> = Object.keys(updateObject).map((key: string): string => `${key}="${updateObject[key]}"`);
+  return `UPDATE ${config.tableName}
+    SET ${setStrings.join(', ')}
+    WHERE bookId=${parseInt(bookId)};`;
+}
+
 exports.getAddBookQuery = (body: Object, newId: number) => {
   const objectToInsert: Book = Object.assign(body, { bookId: newId });
   const columns = Object.keys(objectToInsert);

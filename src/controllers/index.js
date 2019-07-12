@@ -1,7 +1,8 @@
 // @flow
 const { tableName } = require('../../config');
 const connection = require('../db-connection');
-const { getQueryByParams, getAddBookQuery, getMaxNumber } = require('../lib');
+const { getQueryByParams, getAddBookQuery,
+  getMaxNumber, getUpdateString } = require('../lib');
 
 exports.getBooks = async (ctx: Context) => {
   const bookId = ctx.params.bookId;
@@ -40,7 +41,7 @@ exports.addBook = async (ctx: Context) => {
   console.log('body', ctx.request.body);
   const addNewBook = async (book: Object): Promise<void> => {
     const newId: number = await getMaxNumber('bookId', tableName, ctx);
-    const queryString = getAddBookQuery(book, newId + 1);
+    const queryString: string = getAddBookQuery(book, newId + 1);
     console.log('queryString', queryString);
     return new Promise(resolve => {
       connection.query(queryString, (err, result) => {
@@ -52,7 +53,17 @@ exports.addBook = async (ctx: Context) => {
   ctx.body = await addNewBook(ctx.request.body);
 };
 
-exports.updateBook = (ctx: Context) => {
+exports.updateBook = async (ctx: Context) => {
   console.log('ctx.request.body', ctx.request.body);
-  ctx.body = ctx.request.body;
+  const updateBook = (updateObject: Object): Promise<void> => {
+    return new Promise (resolve => {
+      const queryString: string = getUpdateString(updateObject);
+      console.log('queryString', queryString);
+      connection.query(queryString, (err, result) => {
+        if (err) ctx.throw(500, 'Error on updateBook');
+        resolve(result);
+      });
+    });
+  }
+  ctx.body = await updateBook(ctx.request.body);
 };
