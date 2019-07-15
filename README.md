@@ -1,9 +1,9 @@
 ## Test task koa + MySQL without ORM
 
-#Refactored: 
-	- "return new Promise" replaced with promisify.
-	- quotes escaped.
-	- using .join(' AND ')
+# Refactored:
+    - "return new Promise" replaced with promisify.
+    - quotes escaped.
+    - using .join(' AND ')
 
 ### Features
 
