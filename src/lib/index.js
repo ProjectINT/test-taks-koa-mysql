@@ -1,8 +1,35 @@
 // @flow
+const promisify = require('util').promisify;
 const config = require('../../config');
 const connection = require('../db-connection');
+const query = promisify(connection.query).bind(connection);
+
+exports.escapeQuotes = (value: string | number, ctx: Context) => {
+  console.log('value in escapedQuotes', value);
+  if (typeof value === 'string') {
+    const escaped = value.replace(/'|"|`/gm, (match) => {
+        switch (match) {
+          case "\'":
+            return "\\'";
+          case '\"':
+            return "\\'";
+          case '\`':
+            return '\\`';
+          default:
+            break;
+        }
+      });
+    return escaped;
+  } else {
+    ctx.throw(400, 'Value is not a string');
+  }
+}
 
 exports.getUpdateString = (updateObject: Object) => {
+  for (let key in updateObject) {
+    const escapedValue = module.exports.escapeQuotes(updateObject[key]);
+    updateObject[key] = escapedValue;
+  }
   const { bookId } = updateObject;
   delete updateObject.bookId;
   let setStrings: Array<string> = Object.keys(updateObject).map((key: string): string => `${key}="${updateObject[key]}"`);
@@ -12,6 +39,10 @@ exports.getUpdateString = (updateObject: Object) => {
 }
 
 exports.getAddBookQuery = (body: Object, newId: number) => {
+  for (let key in body) {
+    const escapedValue = module.exports.escapeQuotes(body[key]);
+    body[key] = escapedValue;
+  }
   const objectToInsert: Book = Object.assign(body, { bookId: newId });
   const columns = Object.keys(objectToInsert);
   const values = Object.values(objectToInsert).map(item => (typeof item === 'string' ? '\'' + item + '\'' : item ));
@@ -19,19 +50,22 @@ exports.getAddBookQuery = (body: Object, newId: number) => {
   VALUES (${values.join(', ')});`;
 };
 
-exports.getMaxNumber = (field: string, table: string, ctx: Context): Promise<number> => {
-  return new Promise(resolve => {
-    connection.query(`SELECT MAX(${field}) AS maxID FROM ${table};`, (err, result) => {
-      if (err) ctx.throw(500, 'Error on getMaxNumber');
-      console.log('typeof result[0].maxID : ', typeof result[0].maxID);
-      const toResolve: number = parseInt(result[0].maxID);
-      resolve(toResolve);
-    });
-  });
+exports.getMaxNumber = async (field: string, table: string, ctx: Context): Promise<number> => {
+   const result = await query(`SELECT MAX(${field}) AS maxID FROM ${table};`);
+   if (result.err) {
+     ctx.throw(500, 'Error on getMaxNumber');
+    }
+    console.log('typeof result[0].maxID : ', typeof result[0].maxID);
+    console.log('result in getMaxNumber', result);
+    const toResolve: number = parseInt(result[0].maxID);
+    return toResolve;
 };
 
 exports.getQueryByParams = (getParams: Object) => {
   for (let key in getParams) {
+    const escapedValue = module.exports.escapeQuotes(getParams[key]);
+    console.log('escapedValue', escapedValue);
+    getParams[key] = escapedValue;
     if (key === 'minDate' || key === 'maxDate') {
       const formattedDate = formatDate(getParams[key]);
       getParams[key] = formattedDate ? formattedDate : undefined;
@@ -39,10 +73,12 @@ exports.getQueryByParams = (getParams: Object) => {
   }
   const { minDate, maxDate, author, title, limit, offset, order } = getParams;
   const dateExist: number = minDate | maxDate;
+  // In this case using pattern .join('AND') is not useful
+  // because we have 3 varios in getDateCondition function
+  // we can use it only for title and author:
   const queryString = `SELECT * FROM ${config.tableName}
   WHERE ${getDateCondition(minDate, maxDate)}
-  ${getAuthorCondition(author, dateExist)}
-  ${getTitleCondition(title, dateExist, author)}
+  ${title || author ? getTitleAuthorCondition(title, author, dateExist) : ''}
   ${getOrderBy(order)}
   ${getLimit(limit)}
   ${getOffset(offset)}
@@ -54,24 +90,14 @@ function trimString (str: string) {
   return str.replace(/\s{2,}/gm, ' ').replace(/\r{2,}/gm, '');
 }
 
-function getTitleCondition (title, dateExist, author) {
-  if (title && (dateExist || author)) {
-    return `AND title=${title}`;
+function getTitleAuthorCondition (title, author, dateExist) {
+  let arr = [];
+  title ? arr.push(`title="${title}"`) : 'nothing';
+  author ? arr.push(`author="${author}"`) : 'nothing';
+  if (dateExist) {
+    return 'AND ' + arr.join(' AND ');
   }
-  if (title && !(dateExist || author)) {
-    return `title=${title}`;
-  }
-  return '';
-}
-
-function getAuthorCondition (author, dateExist) {
-  if (dateExist && author) {
-    return `AND author=${author}`;
-  }
-  if (!dateExist && author) {
-    return `author=${author}`;
-  }
-  return '';
+  return arr.join(' AND ');
 }
 
 function getDateCondition (minDate: number, maxDate: number ) {

@@ -1,37 +1,31 @@
 // @flow
+const { promisify } = require('util');
 const { tableName } = require('../../config');
 const connection = require('../db-connection');
+const query = promisify(connection.query).bind(connection);
+
 const { getQueryByParams, getAddBookQuery,
-  getMaxNumber, getUpdateString } = require('../lib');
+  getMaxNumber, getUpdateString, escapeQuotes } = require('../lib');
 
 exports.getBooks = async (ctx: Context) => {
   const bookId = ctx.params.bookId;
   if (bookId) {
     console.log('bookId', bookId);
-    const getBookById = (id) => {
-      const query = `SELECT * FROM ${tableName} WHERE bookId=${id};`;
-      return new Promise((resolve) => {
-        connection.query(query, (err, result) => {
-          if (err) ctx.throw(500, 'Error on get book by id getBookById');
-          console.log('result', result[0]);
-          resolve(result[0]);
-        });
-      });
-    };
-    ctx.body = await getBookById(bookId);
+    const escapedId = escapeQuotes(ctx.params.bookId, ctx);
+    if (escapedId) {
+      const result = await query(`SELECT * FROM ${tableName} WHERE bookId=${escapedId};`);
+      console.log('result', result);
+      ctx.body = result;
+    }
   } else {
     const getParams = ctx.query;
     console.log('getParams', getParams);
-    const getBooksByQuery = (params: Object) => {
-      const query = getQueryByParams(params);
-      console.log('query', query);
-      return new Promise((resolve) => {
-        connection.query(query, (err, result) => {
-          if (err) ctx.throw(500, 'Error on get book getBooksByQuery');
-          console.log('result', result[0]);
-          resolve(result);
-        });
-      });
+    const getBooksByQuery = async (params: Object) => {
+      const queryString = getQueryByParams(params);
+      console.log('query', queryString);
+      const result = await query(queryString)
+      console.log('result[0]', result[0]);
+      return result;
     };
     ctx.body = await getBooksByQuery(getParams);
   }
@@ -43,27 +37,19 @@ exports.addBook = async (ctx: Context) => {
     const newId: number = await getMaxNumber('bookId', tableName, ctx);
     const queryString: string = getAddBookQuery(book, newId + 1);
     console.log('queryString', queryString);
-    return new Promise(resolve => {
-      connection.query(queryString, (err, result) => {
-        if (err) ctx.throw(500, 'Error on addNewBook');
-        resolve(result);
-      });
-    });
+    const result = await query(queryString);
+    return result;
   };
   ctx.body = await addNewBook(ctx.request.body);
 };
 
 exports.updateBook = async (ctx: Context) => {
   console.log('ctx.request.body', ctx.request.body);
-  const updateBook = (updateObject: Object): Promise<void> => {
-    return new Promise (resolve => {
-      const queryString: string = getUpdateString(updateObject);
-      console.log('queryString', queryString);
-      connection.query(queryString, (err, result) => {
-        if (err) ctx.throw(500, 'Error on updateBook');
-        resolve(result);
-      });
-    });
+  const updateBook = async (updateObject: Object): Promise<void> => {
+    const queryString: string = getUpdateString(updateObject);
+    console.log('queryString', queryString);
+    const result = await query(queryString);
+    return result;
   }
   ctx.body = await updateBook(ctx.request.body);
 };
