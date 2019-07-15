@@ -50,15 +50,15 @@ exports.getAddBookQuery = (body: Object, newId: number) => {
   VALUES (${values.join(', ')});`;
 };
 
-exports.getMaxNumber = async (field: string, table: string, ctx: Context): Promise<number> => {
-   const result = await query(`SELECT MAX(${field}) AS maxID FROM ${table};`);
-   if (result.err) {
-     ctx.throw(500, 'Error on getMaxNumber');
-    }
-    console.log('typeof result[0].maxID : ', typeof result[0].maxID);
+exports.getMaxNumber = async (field: string, table: string, ctx: Context): number => {
+  try {
+    const result = await query(`SELECT MAX(${field}) AS maxID FROM ${table};`);
     console.log('result in getMaxNumber', result);
-    const toResolve: number = parseInt(result[0].maxID);
-    return toResolve;
+    const toReturn: number = parseInt(result[0].maxID);
+    return toReturn;
+  } catch (error) {
+    console.log('Error in getMaxNumber', error);
+  }
 };
 
 exports.getQueryByParams = (getParams: Object) => {
