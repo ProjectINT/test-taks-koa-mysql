@@ -1,5 +1,10 @@
 ## Test task koa + MySQL without ORM
 
+#Refactored: 
+	- "return new Promise" replaced with promisify.
+	- quotes escaped.
+	- using .join(' AND ')
+
 ### Features
 
  ##### 1. App create table with 1e3 items with fields: (if not exist)
